@@ -23,7 +23,7 @@ class ESP32HWEncoder : public Sensor{
         Encoder class constructor
         @param ppr  impulses per rotation  (cpr=ppr*4)
         */
-        explicit ESP32HWEncoder(uint8_t pinA, uint8_t pinB, uint32_t ppr, int8_t pinI=-1);
+        explicit ESP32HWEncoder(int pinA, int pinB, uint32_t ppr, int pinI=-1);
 
         void init() override;
         int needsSearch() override;
@@ -41,9 +41,8 @@ class ESP32HWEncoder : public Sensor{
         
         bool indexFound = false;
 
-        uint8_t _pinA, _pinB;
-        int8_t _pinI;
-        
+        int _pinA, _pinB, _pinI;
+
         pcnt_config_t pcnt_config;
 
         int16_t angleCounter;

@@ -4,7 +4,7 @@
 
 
 
-ESP32HWEncoder::ESP32HWEncoder(uint8_t pinA, uint8_t pinB, uint32_t ppr, int8_t pinI)
+ESP32HWEncoder::ESP32HWEncoder(int pinA, int pinB, uint32_t ppr, int pinI)
 {
     _pinA = pinA;
     _pinB = pinB;
@@ -12,39 +12,39 @@ ESP32HWEncoder::ESP32HWEncoder(uint8_t pinA, uint8_t pinB, uint32_t ppr, int8_t 
 
     cpr = ppr * 4; // 4x for quadrature
 
-    pcnt_config.ctrl_gpio_num =  static_cast<int>(pinA);;
-    pcnt_config.pulse_gpio_num = static_cast<int>(pinB);;
-    pcnt_config.counter_l_lim = INT16_MIN; // center on zero to use the index pin to reset the value to 0.
+    pcnt_config.ctrl_gpio_num =  pinA;
+    pcnt_config.pulse_gpio_num = pinB;
+    pcnt_config.counter_l_lim = INT16_MIN;
     pcnt_config.counter_h_lim = INT16_MAX;
-    pcnt_config.unit = PCNT_UNIT_0;
 } 
 
 void IRAM_ATTR overflowCounter(void *arg)                // Interrupt handler for overflowing the pulsecounter count
 {
-    // uint32_t count = ((uint32_t*) arg)[0];
-    // pcnt_unit_t unit = *(pcnt_unit_t*) (*(uint32_t*) arg);
+    uint32_t* count = ((uint32_t*) arg);
+    pcnt_unit_t unit = *(pcnt_unit_t*) (*(uint32_t*) arg);
 
-    switch (PCNT.status_unit[*(pcnt_unit_t*) (*(uint32_t*) arg)].val)
+    switch (PCNT.status_unit[unit].val)
     {
     case PCNT_EVT_L_LIM:
-        ((uint32_t*) arg)[0] += INT16_MIN; // arg is pointer to angleOverflow
-        pcnt_counter_clear(PCNT_UNIT_0); // reset counter
+        *count += INT16_MIN; // arg is pointer to angleOverflow
+        pcnt_counter_clear(unit); // reset counter
         break;
     case PCNT_EVT_H_LIM:
-        ((uint32_t*) arg)[0] += INT16_MAX;
-        pcnt_counter_clear(PCNT_UNIT_0); // reset counter
+        *count += INT16_MAX;
+        pcnt_counter_clear(unit); // reset counter
         break;
     default:
         break;
     }
 
-    PCNT.int_clr.val = BIT(*(pcnt_unit_t*) (*(uint32_t*) arg));
+    PCNT.int_clr.val = BIT(unit);
 }
 
 void IRAM_ATTR ESP32HWEncoder::indexHandler()                // Interrupt handler for zeroing the pulsecounter count
 {
     pcnt_counter_clear(pcnt_config.unit);
     angleOverflow = 0;
+    indexFound = true;
 }
 
 void ESP32HWEncoder::init()
@@ -98,8 +98,8 @@ void ESP32HWEncoder::init()
         // Optionally use pullups
         if (pullup == USE_INTERN)
         {
-            pinMode(_pinA, INPUT_PULLUP);
-            pinMode(_pinB, INPUT_PULLUP);
+            pinMode(static_cast<u_int8_t>(_pinA), INPUT_PULLUP);
+            pinMode(static_cast<u_int8_t>(_pinB), INPUT_PULLUP);
             if (hasIndex()) {pinMode(static_cast<u_int8_t>(_pinI), INPUT_PULLUP);}
         }
 
@@ -125,7 +125,7 @@ float ESP32HWEncoder::getSensorAngle()
     pcnt_get_counter_value(pcnt_config.unit, &angleCounter);
     
     // Calculate the shaft angle
-    angleOverflow %= cpr; // trim the overflow variable to prevent issues with itself overflowing
+    angleOverflow %= cpr; // trim the overflow variable to prevent issues with it overflowing itself
     return _2PI * ((angleOverflow + angleCounter) % cpr) / (float)cpr;
 }
 
