@@ -4,7 +4,7 @@
 
 
 
-ESP32HWEncoder::ESP32HWEncoder(int pinA, int pinB, uint32_t ppr, int pinI)
+ESP32HWEncoder::ESP32HWEncoder(int pinA, int pinB, int32_t ppr, int pinI)
 {
     _pinA = pinA;
     _pinB = pinB;
@@ -18,29 +18,33 @@ ESP32HWEncoder::ESP32HWEncoder(int pinA, int pinB, uint32_t ppr, int pinI)
     pcnt_config.counter_h_lim = INT16_MAX;
 } 
 
-void IRAM_ATTR overflowCounter(void *arg)                // Interrupt handler for overflowing the pulsecounter count
+// Interrupt handler for overflowing the pulsecounter count
+void IRAM_ATTR overflowCounter(void* arg)
 {
-    uint32_t* count = ((uint32_t*) arg);
-    pcnt_unit_t unit = *(pcnt_unit_t*) (*(uint32_t*) arg);
+    int32_t* count = (*(overflowISR_args_t*) arg).angleoverflow_val;
+    pcnt_unit_t unit = (*(overflowISR_args_t*) arg).unit;
 
+    // Add or subtract depending on the direction of the overflow
     switch (PCNT.status_unit[unit].val)
     {
     case PCNT_EVT_L_LIM:
-        *count += INT16_MIN; // arg is pointer to angleOverflow
         pcnt_counter_clear(unit); // reset counter
+        *count += INT16_MIN/2; // This _should_ be just INT16_MIN, but it has to be halved for some reason
         break;
     case PCNT_EVT_H_LIM:
-        *count += INT16_MAX;
-        pcnt_counter_clear(unit); // reset counter
+        pcnt_counter_clear(unit); // reset counter 
+        *count += INT16_MAX/2;
         break;
     default:
         break;
     }
 
+    // Clear the interrupt
     PCNT.int_clr.val = BIT(unit);
 }
 
-void IRAM_ATTR ESP32HWEncoder::indexHandler()                // Interrupt handler for zeroing the pulsecounter count
+// Interrupt handler for zeroing the pulsecounter count
+void IRAM_ATTR ESP32HWEncoder::indexHandler()
 {
     pcnt_counter_clear(pcnt_config.unit);
     angleOverflow = 0;
@@ -76,7 +80,6 @@ void ESP32HWEncoder::init()
         pcnt_event_enable(pcnt_config.unit, PCNT_EVT_H_LIM);
 
         // Pass pointer to the angle accumulator and the current PCNT unit to the ISR
-        overflowISR_args_t overflowISR_args;
         overflowISR_args.angleoverflow_val = &angleOverflow;
         overflowISR_args.unit = pcnt_config.unit;
 
@@ -123,10 +126,21 @@ float ESP32HWEncoder::getSensorAngle()
 
     // Retrieve the count register into a variable
     pcnt_get_counter_value(pcnt_config.unit, &angleCounter);
-    
+
+    // Trim the overflow variable to prevent issues with it overflowing
+    // Make the % operand behave mathematically correct (-5 modulo 4 == 3; -5 % 4 == -1)
+    angleOverflow %= cpr;
+    if (angleOverflow < 0){
+        angleOverflow += cpr;
+    }
+
+    angleSum = (angleOverflow + angleCounter) % cpr;
+    if (angleSum < 0) {
+        angleSum += cpr;
+    }
+
     // Calculate the shaft angle
-    angleOverflow %= cpr; // trim the overflow variable to prevent issues with it overflowing itself
-    return _2PI * ((angleOverflow + angleCounter) % cpr) / (float)cpr;
+    return _2PI * (float)angleSum / (float)cpr;
 }
 
 #endif
