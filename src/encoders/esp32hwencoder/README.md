@@ -3,6 +3,10 @@
 This encoder driver uses the ESP32´s dedicated pulse counter hardware to efficiently count the AB(I) signals of an encoder. 
 
 Because most of the counting is done by the peripheral, it should support much higher speeds in comparison to the generic interrupt-based encoder implementation provided in the main library. 
+The PCNT peripheral can count at several MHz and should not be a limiting factor here.
+
+You can use encoders with cpr of up to 31 bits. (At this resolution, you would get about 100 counts per second if you mounted such a sensor on the earths rotational axis. Thats plenty ;-) ) 
+
 
 ## Warning
 
@@ -13,8 +17,6 @@ Currently very much untested!
 You can connect the encoder to any digital input pin of the ESP32, as they all support the PCNT peripheral.
 
 ## Configuration
-
-It should support encoders with a cpr of up to 31 bits. (At this resolution, you would get about 100 counts per second if you mounted such a sensor on the earths rotational axis. Thats plenty ;-) ) 
 
 This is a near drop-in replacement for the standard encoder class:
 
@@ -29,7 +31,7 @@ This is a near drop-in replacement for the standard encoder class:
 #define ENCODER_PIN_B 17
 #define ENCODER_PIN_I 21
 
-ESP32HWEncoder sensor = ESP32HWEncoder(ENCODER_PIN_A, ENCODER_PIN_B, ENCODER_PPR, ENCODER_PIN_I); // The encoder pin can be omitted
+ESP32HWEncoder encoder = ESP32HWEncoder(ENCODER_PIN_A, ENCODER_PIN_B, ENCODER_PPR, ENCODER_PIN_I); // The encoder pin can be omitted
 
 void setup() {
     encoder.pullup = Pullup::USE_INTERN; // optional: pullups
