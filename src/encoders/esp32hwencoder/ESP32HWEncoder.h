@@ -17,6 +17,9 @@ typedef struct overflowISR_args_t {
     pcnt_unit_t unit;
 }overflowISR_args;
 
+// Statically allocate and initialize a spinlock
+static portMUX_TYPE spinlock;
+
 class ESP32HWEncoder : public Sensor{
     public:
         /**
@@ -48,7 +51,7 @@ class ESP32HWEncoder : public Sensor{
 
         pcnt_config_t pcnt_config;
         overflowISR_args_t overflowISR_args;
-        
+
         int16_t angleCounter;
         int32_t angleOverflow;
         int32_t angleSum;

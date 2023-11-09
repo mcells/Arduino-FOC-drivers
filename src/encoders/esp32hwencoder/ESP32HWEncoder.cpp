@@ -6,14 +6,21 @@
 
 ESP32HWEncoder::ESP32HWEncoder(int pinA, int pinB, int32_t ppr, int pinI)
 {
-    _pinA = pinA;
-    _pinB = pinB;
-    _pinI = pinI;
+    #ifdef USE_ARDUINO_PINOUT
+        // Handle Arduino Nano ESP32 quirks with the pin assignments
+        _pinA = digitalPinToGPIO(pinA);
+        _pinB = digitalPinToGPIO(pinB);
+        _pinI = digitalPinToGPIO(pinI);
+    #else
+        _pinA = pinA;
+        _pinB = pinB;
+        _pinI = pinI;
+    #endif
 
     cpr = ppr * 4; // 4x for quadrature
 
-    pcnt_config.ctrl_gpio_num =  pinA;
-    pcnt_config.pulse_gpio_num = pinB;
+    pcnt_config.ctrl_gpio_num =  _pinA;
+    pcnt_config.pulse_gpio_num = _pinB;
     pcnt_config.counter_l_lim = INT16_MIN;
     pcnt_config.counter_h_lim = INT16_MAX;
 } 
@@ -28,11 +35,9 @@ void IRAM_ATTR overflowCounter(void* arg)
     switch (PCNT.status_unit[unit].val)
     {
     case PCNT_EVT_L_LIM:
-        pcnt_counter_clear(unit); // reset counter
         *count += INT16_MIN/2; // This _should_ be just INT16_MIN, but it has to be halved for some reason
         break;
     case PCNT_EVT_H_LIM:
-        pcnt_counter_clear(unit); // reset counter 
         *count += INT16_MAX/2;
         break;
     default:
@@ -53,6 +58,9 @@ void IRAM_ATTR ESP32HWEncoder::indexHandler()
 
 void ESP32HWEncoder::init()
 {
+
+    // Statically allocate and initialize the spinlock
+    spinlock = portMUX_INITIALIZER_UNLOCKED;
 
     // find a free pulsecount unit
     for (uint8_t i = 0; i < PCNT_UNIT_MAX; i++)
@@ -124,6 +132,9 @@ float ESP32HWEncoder::getSensorAngle()
 {
     if(!initialized){return -1.0f;}
 
+    taskENTER_CRITICAL(&spinlock);
+    // We are now in a critical section to prevent interrupts messing with angleOverflow and angleCounter
+
     // Retrieve the count register into a variable
     pcnt_get_counter_value(pcnt_config.unit, &angleCounter);
 
@@ -138,6 +149,8 @@ float ESP32HWEncoder::getSensorAngle()
     if (angleSum < 0) {
         angleSum += cpr;
     }
+
+    taskEXIT_CRITICAL(&spinlock); // Exit critical section
 
     // Calculate the shaft angle
     return _2PI * (float)angleSum / (float)cpr;
