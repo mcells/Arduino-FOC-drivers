@@ -65,7 +65,7 @@ Usage as highpass Filter:
 ```cpp
 float f = 100; // 100Hz highpass
 MultiFilter filter();
-filter.setFrequency(f)
+filter.setFrequency(f);
 
 // using getHp():
 float filtered = filter.getHp(x);
