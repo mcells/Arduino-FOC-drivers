@@ -102,7 +102,7 @@ void MultiFilter::setTf(float newTf)
 {
     if(newTf <= 0.0f) {newTf = 1e-3f;}
     Tf = newTf;
-    timeConstFactor = _PI / Tf;
+    timeConstFactor = 1 / (_PI * Tf);
 }
 
 void MultiFilter::setNotchDepth(float newNotchDepth)
