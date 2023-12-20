@@ -14,10 +14,10 @@ To use the `MultiFilter` class, you need to include the following header file:
 #include "utilities/MultiFilter/MultiFilter.h"
 ```
 
-Then, create an instance of the `MultiFilter` class by providing the filter time constant (`Tf`) and optionally the resonance (`q`). The time constant represents the inverse of the center frequency for bandpass and notch filters or -3dB cutoff frequency for low-pass and high-pass filters.
+Then, create an instance of the `MultiFilter` class either without parameters, or by providing the filter time constant (`Tf`) and optionally the resonance (`q`). The time constant represents the inverse of 2*pi the center frequency for bandpass and notch filters or -3dB cutoff frequency for low-pass and high-pass filters. The frequency can also be set directly via `setFrequency()`.
 
 ```cpp
-float Tf = 0.01; // Filter time constant
+float Tf = 0.01; // Filter time constant (optional)
 float q = 0.707; // Filter resonance (optional)
 MultiFilter filter(Tf, q);
 ```
@@ -57,3 +57,19 @@ If you want to retrieve filter outputs while updating the filter state, you can 
 - Notch: `getNotch(float x)`
 
 These functions take an input value (`x`) and update the filter state accordingly before returning the filtered output.
+
+
+## Example
+
+Usage as highpass Filter:
+```cpp
+float f = 100; // 100Hz highpass
+MultiFilter filter();
+filter.setFrequency(f)
+
+// using getHp():
+float filtered = filter.getHp(x);
+// or with changing the default return type:
+filter.setReturnType(MULTI_FILTER_HIGHPASS);
+filtered = filter(x);
+```

@@ -13,10 +13,10 @@ class MultiFilter
 {
 public:
     /**
-     * @param Tf - Filter time constant, 1/frequency, where frequency is the center of bandpass and notch filters, and the "-3dB" of high- and lowpass
+     * @param Tf - Filter time constant in rad/s, 1/(2PI * frequency), where frequency is the center of bandpass and notch filters, and the "-3dB" of high- and lowpass
      * @param q - Filter resonance
      */
-    MultiFilter(float Tf, float q=0.707f);
+    MultiFilter(float Tf=0.01f, float q=0.707f);
 
     enum returnType {
         MULTI_FILTER_LOWPASS,
@@ -29,12 +29,12 @@ public:
 
     void setQ(float newQ);                      //!< Set filter resonance
     void setTf(float newTf);                    //!< Set time constant
-    void setFrequency(float newFrequency);      //!< set filter frequency instead of time constant
+    void setFrequency(float newFrequency);      //!< set filter frequency in Hz instead of time constant
     void setNotchDepth(float newNotchDepth);    //!< Set notch filter depth
     void setReturnType(returnType type);        //!< change between low-, high-, bandpass, or notch output as default return value
 
     float getTf() {return Tf;}
-    float getFrequency() {return 1.0f/Tf;}
+    float getFrequency() {return 1.0f/(_2PI*Tf);}
     float getQ() {return q;}
     float getNotchdepth() {return notchDepth;}
     returnType getReturnType() {return defaultFilter;}
