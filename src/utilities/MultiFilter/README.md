@@ -70,6 +70,6 @@ filter.setFrequency(f);
 // using getHp():
 float filtered = filter.getHp(x);
 // or with changing the default return type:
-filter.setReturnType(MULTI_FILTER_HIGHPASS);
+filter.setReturnType(MultiFilter::MULTI_FILTER_HIGHPASS);
 filtered = filter(x);
 ```
