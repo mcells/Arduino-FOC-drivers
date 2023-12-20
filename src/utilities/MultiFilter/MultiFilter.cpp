@@ -126,6 +126,7 @@ void MultiFilter::setFrequency(float newFrequency)
     {
         Tf = 1e-3f;
     }
+    setTf(Tf);
 }
 
 void MultiFilter::setReturnType(returnType type)
