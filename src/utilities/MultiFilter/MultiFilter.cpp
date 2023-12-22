@@ -13,11 +13,13 @@ MultiFilter::MultiFilter(float time_constant, float q_factor)
 }
 
 
-float MultiFilter::operator() (float x)
+float MultiFilter::operator() (float x, float dt=NOT_SET)
 {
     // Implements a state variable filter
     unsigned long timestamp = _micros();
-    float dt = (timestamp - timestamp_prev)*1e-6f;
+    if(dt == NOT_SET){
+        dt = (timestamp - timestamp_prev)*1e-6f;
+    }
 
     if (dt < 0.0f ) dt = 1e-3f;
     else if(dt > 0.3f) {
@@ -64,24 +66,24 @@ float MultiFilter::getHp() {return yh_prev;}
 float MultiFilter::getBp() {return yb_prev * alpha2;}
 float MultiFilter::getNotch() {return yn_prev * notchScalingfactor;}
 
-float MultiFilter::getLp(float x) 
+float MultiFilter::getLp(float x, float dt=NOT_SET) 
 {
-    (*this)(x);  // Call operator() on current instance of MultiFilter
+    (*this)(x, dt);  // Call operator() on current instance of MultiFilter
     return yl_prev;
 }
-float MultiFilter::getHp(float x) 
+float MultiFilter::getHp(float x, float dt=NOT_SET) 
 {
-    (*this)(x);  // Call operator() on current instance of MultiFilter
+    (*this)(x, dt);  // Call operator() on current instance of MultiFilter
     return yh_prev;
 }
-float MultiFilter::getBp(float x) 
+float MultiFilter::getBp(float x, float dt=NOT_SET) 
 {
-    (*this)(x);  // Call operator() on current instance of MultiFilter
+    (*this)(x, dt);  // Call operator() on current instance of MultiFilter
     return yb_prev * alpha2;
 }
-float MultiFilter::getNotch(float x) 
+float MultiFilter::getNotch(float x, float dt=NOT_SET) 
 {
-    (*this)(x);  // Call operator() on current instance of MultiFilter
+    (*this)(x, dt);  // Call operator() on current instance of MultiFilter
     return yn_prev * notchScalingfactor;
 }
 

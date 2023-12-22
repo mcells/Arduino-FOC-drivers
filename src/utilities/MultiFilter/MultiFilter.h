@@ -25,7 +25,7 @@ public:
         MULTI_FILTER_NOTCH
     };
 
-    float operator() (float x);
+    float operator() (float x, float dt=NOT_SET);
 
     void setQ(float newQ);                      //!< Set filter resonance
     void setTf(float newTf);                    //!< Set time constant
@@ -46,10 +46,10 @@ public:
     float getNotch();
 
     //!< Get different filter outputs while updating the filter state
-    float getLp(float x);
-    float getHp(float x);
-    float getBp(float x);
-    float getNotch(float x);
+    float getLp(float x, float dt=NOT_SET);
+    float getHp(float x, float dt=NOT_SET);
+    float getBp(float x, float dt=NOT_SET);
+    float getNotch(float x, float dt=NOT_SET);
 
 protected:
     unsigned long timestamp_prev;  //!< Last execution timestamp
