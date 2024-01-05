@@ -31,7 +31,7 @@ This is a near drop-in replacement for the standard encoder class:
 #define ENCODER_PIN_B 17
 #define ENCODER_PIN_I 21
 
-ESP32HWEncoder encoder = ESP32HWEncoder(ENCODER_PIN_A, ENCODER_PIN_B, ENCODER_PPR, ENCODER_PIN_I); // The encoder pin can be omitted
+ESP32HWEncoder encoder = ESP32HWEncoder(ENCODER_PIN_A, ENCODER_PIN_B, ENCODER_PPR, ENCODER_PIN_I); // The Index pin can be omitted
 
 void setup() {
     encoder.pullup = Pullup::USE_INTERN; // optional: pullups
