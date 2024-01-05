@@ -31,17 +31,19 @@ class ESP32HWEncoder : public Sensor{
         void init() override;
         int needsSearch() override;
         int hasIndex();
-
+        float getSensorAngle() override;
+        void setCpr(int32_t ppr);
+        int32_t getCpr();
         bool initialized = false;
 
-        int32_t cpr; // Counts per rotation = 4 * ppr for quadrature encoders
+        
 
         Pullup pullup; //!< Configuration parameter internal or external pullups
 
 
 
     protected:
-        float getSensorAngle() override;
+        
 
         void IRAM_ATTR indexHandler();
         
@@ -52,9 +54,12 @@ class ESP32HWEncoder : public Sensor{
         pcnt_config_t pcnt_config;
         overflowISR_args_t overflowISR_args;
 
-        int16_t angleCounter;
-        int32_t angleOverflow;
-        int32_t angleSum;
+        int16_t angleCounter; // Stores the PCNT value
+        int32_t angleOverflow; // In case the PCNT peripheral overflows, this receives the max count to keep track of large counts/angles. On index, this gets reset.
+        int32_t angleSum; // sum of angle 
+
+        int32_t cpr; // Counts per rotation = 4 * ppr for quadrature encoders
+        float inv_cpr;
 };
 
 #endif

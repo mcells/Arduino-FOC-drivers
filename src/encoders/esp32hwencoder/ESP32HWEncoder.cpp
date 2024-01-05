@@ -65,6 +65,10 @@ void ESP32HWEncoder::init()
     // find a free pulsecount unit
     for (uint8_t i = 0; i < PCNT_UNIT_MAX; i++)
     {
+        if(cpr > 0){
+            inv_cpr = 1.0f/cpr;
+        }
+
         pcnt_config.unit = (pcnt_unit_t) i;
         if(pcnt_unit_config(&pcnt_config) == ESP_OK){
             initialized = true;
@@ -120,7 +124,7 @@ void ESP32HWEncoder::init()
 
 int ESP32HWEncoder::needsSearch()
 {
-    return !((indexFound && hasIndex()) || !hasIndex());
+        return !((indexFound && hasIndex()) || !hasIndex());
 }
 
 int ESP32HWEncoder::hasIndex()
@@ -128,7 +132,18 @@ int ESP32HWEncoder::hasIndex()
     return _pinI != -1;
 }
 
-float ESP32HWEncoder::getSensorAngle()
+void ESP32HWEncoder::setCpr(int32_t ppr){
+    cpr = 4*ppr;
+    if(cpr > 0){
+        inv_cpr = 1.0f/cpr; // Precalculate the inverse of the angle to avoid slow float divisions
+    }
+}
+
+int32_t ESP32HWEncoder::getCpr(){
+    return cpr;
+}
+
+float IRAM_ATTR ESP32HWEncoder::getSensorAngle()
 {
     if(!initialized){return -1.0f;}
 
@@ -151,9 +166,9 @@ float ESP32HWEncoder::getSensorAngle()
     }
 
     taskEXIT_CRITICAL(&spinlock); // Exit critical section
-
+    
     // Calculate the shaft angle
-    return _2PI * (float)angleSum / (float)cpr;
+    return _2PI * angleSum * inv_cpr;
 }
 
 #endif
