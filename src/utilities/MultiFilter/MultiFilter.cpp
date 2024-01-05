@@ -1,6 +1,6 @@
 #include "MultiFilter.h"
 
-MultiFilter::MultiFilter(float time_constant, float q_factor)
+MultiFilter::MultiFilter(float frequency, float q_factor)
     : yl_prev(0.0f)
     , yh_prev(0.0f)
     , yb_prev(0.0f)
@@ -8,12 +8,12 @@ MultiFilter::MultiFilter(float time_constant, float q_factor)
 
 {
     setQ(q_factor);
-    setTf(time_constant);
+    setFrequency(frequency);
     timestamp_prev = _micros();
 }
 
 
-float MultiFilter::operator() (float x, float dt=NOT_SET)
+float MultiFilter::operator() (float x, float dt)
 {
     // Implements a state variable filter
     unsigned long timestamp = _micros();
@@ -31,7 +31,8 @@ float MultiFilter::operator() (float x, float dt=NOT_SET)
         return x;
     }
 
-    alpha1 = 2 * _sin(dt * timeConstFactor);
+    alpha1 = _constrain(2 * _sin(dt * timeConstFactor), 0.0f, 1.0f);
+
     float yh = x - yl_prev - alpha2 * yb_prev;
     float yb = alpha1 * yh + yb_prev;
     float yl = alpha1 * yb + yl_prev;
@@ -66,22 +67,22 @@ float MultiFilter::getHp() {return yh_prev;}
 float MultiFilter::getBp() {return yb_prev * alpha2;}
 float MultiFilter::getNotch() {return yn_prev * notchScalingfactor;}
 
-float MultiFilter::getLp(float x, float dt=NOT_SET) 
+float MultiFilter::getLp(float x, float dt) 
 {
     (*this)(x, dt);  // Call operator() on current instance of MultiFilter
     return yl_prev;
 }
-float MultiFilter::getHp(float x, float dt=NOT_SET) 
+float MultiFilter::getHp(float x, float dt) 
 {
     (*this)(x, dt);  // Call operator() on current instance of MultiFilter
     return yh_prev;
 }
-float MultiFilter::getBp(float x, float dt=NOT_SET) 
+float MultiFilter::getBp(float x, float dt) 
 {
-    (*this)(x, dt);  // Call operator() on current instance of MultiFilter
+    (*this)(x);  // Call operator() on current instance of MultiFilter
     return yb_prev * alpha2;
 }
-float MultiFilter::getNotch(float x, float dt=NOT_SET) 
+float MultiFilter::getNotch(float x, float dt) 
 {
     (*this)(x, dt);  // Call operator() on current instance of MultiFilter
     return yn_prev * notchScalingfactor;
@@ -100,13 +101,6 @@ void MultiFilter::setQ(float newQ)
     }
 }
 
-void MultiFilter::setTf(float newTf)
-{
-    if(newTf <= 0.0f) {newTf = 1e-3f;}
-    Tf = newTf;
-    timeConstFactor = 1 / (_PI * Tf);
-}
-
 void MultiFilter::setNotchDepth(float newNotchDepth)
 {
     if (newNotchDepth >= 0.0f)
@@ -121,14 +115,18 @@ void MultiFilter::setNotchDepth(float newNotchDepth)
 
 void MultiFilter::setFrequency(float newFrequency)
 {
+    // float newTf = 0.003f;
     if (newFrequency > 0.0f)
     {
-        Tf = 1.0f / (_2PI * newFrequency);
+        // newTf = 1.0f / (_2PI * newFrequency);
     }else
     {
-        Tf = 1e-3f;
+        newFrequency = 100.0f;
+        // newTf = 1e-3f;
     }
-    setTf(Tf);
+    (*this).timeConstFactor = (_PI * newFrequency);
+    (*this).freq = newFrequency;
+    // setTf(newTf);
 }
 
 void MultiFilter::setReturnType(returnType type)

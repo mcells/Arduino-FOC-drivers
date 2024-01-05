@@ -1,8 +1,8 @@
 #ifndef MULTI_FILTER_H
 #define MULTI_FILTER_H
 
-#include "time_utils.h"
-#include "foc_utils.h"
+#include "common/time_utils.h"
+#include "common/foc_utils.h"
 
 /**
  *  Multi filter class
@@ -13,10 +13,10 @@ class MultiFilter
 {
 public:
     /**
-     * @param Tf - Filter time constant in rad/s, 1/(2PI * frequency), where frequency is the center of bandpass and notch filters, and the "-3dB" of high- and lowpass
+     * @param f - Filter frequency, i.e. the center of bandpass and notch filters, and the "-3dB" of high- and lowpass
      * @param q - Filter resonance
      */
-    MultiFilter(float Tf=0.01f, float q=0.707f);
+    MultiFilter(float f=100.0f, float q=0.707f);
 
     enum returnType {
         MULTI_FILTER_LOWPASS,
@@ -28,13 +28,11 @@ public:
     float operator() (float x, float dt=NOT_SET);
 
     void setQ(float newQ);                      //!< Set filter resonance
-    void setTf(float newTf);                    //!< Set time constant
     void setFrequency(float newFrequency);      //!< set filter frequency in Hz instead of time constant
     void setNotchDepth(float newNotchDepth);    //!< Set notch filter depth
     void setReturnType(returnType type);        //!< change between low-, high-, bandpass, or notch output as default return value
 
-    float getTf() {return Tf;}
-    float getFrequency() {return 1.0f/(_2PI*Tf);}
+    float getFrequency() {return freq;}
     float getQ() {return q;}
     float getNotchdepth() {return notchDepth;}
     returnType getReturnType() {return defaultFilter;}
@@ -59,7 +57,7 @@ protected:
     float yb_prev; //!< filtered bandpass value in previous execution step 
     float yn_prev; //!< filtered notch value in previous execution step 
 
-    float Tf;                           //!< Multi filter time constant
+    float freq;                         //!< Multi filter frequency
     float timeConstFactor;              //!< precompute divided constant to save time in the loop
     float q = 0.707f;                   //!< filter resonance (quality factor)
     float notchDepth = 0.0f;            //!< notch filter cut depth. 0.0 -> cut everything at peak; 1.0 -> cut to about half amplitude; larger values tend towards no cutting/filtering

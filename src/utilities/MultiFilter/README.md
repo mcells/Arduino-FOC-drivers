@@ -14,10 +14,10 @@ To use the `MultiFilter` class, you need to include the following header file:
 #include "utilities/MultiFilter/MultiFilter.h"
 ```
 
-Then, create an instance of the `MultiFilter` class either without parameters, or by providing the filter time constant (`Tf`) and optionally the resonance (`q`). The time constant represents the inverse of 2*pi the center frequency for bandpass and notch filters or -3dB cutoff frequency for low-pass and high-pass filters. The frequency can also be set directly via `setFrequency()`.
+Then, create an instance of the `MultiFilter` class either without parameters, or by providing the filter frequency (`f`) and optionally the resonance (`q`). (`f`) is the center frequency for bandpass and notch filters or -3dB cutoff frequency for low-pass and high-pass filters. The frequency can also be set via `setFrequency()`.
 
 ```cpp
-float Tf = 0.01; // Filter time constant (optional)
+float f = 100.0; // Filter frequency (optional)
 float q = 0.707; // Filter resonance (optional)
 MultiFilter filter(Tf, q);
 ```
@@ -37,7 +37,7 @@ filter.setReturnType(MultiFilter::MULTI_FILTER_HIGHPASS); // Set return type to 
 You can also adjust other parameters of the filter dynamically:
 
 - To change Q (resonance), use `setQ()`. The Notch and Bandpass Filters will be normalized to unity gain regardless of Q, but High- and Lowpass will have amplification greater than 1 at their resonant peak, in case Q gets larger than about 0.707.
-- To change Tf (time constant), use either `setTf()` or `setFrequency()`. The latter sets Tf based on a desired center frequency.
+- To change f (frequency), use `setFrequency()`.
 - To set notch depth for notch filters, use `setNotchDepth()`. The set value determines how deep a notch is cut by the notch filter. A notchDepth of 0.0 cuts everything at peak amplitude, while larger values tend towards no cutting/filtering.
 
 Additionally, you can retrieve specific outputs from each type of filter using these functions:
@@ -56,7 +56,7 @@ If you want to retrieve filter outputs while updating the filter state, you can 
 - Band-Pass: `getBp(float x)`
 - Notch: `getNotch(float x)`
 
-These functions take an input value (`x`) and update the filter state accordingly before returning the filtered output.
+These functions (and the `operator()`) take an input value (`x`) and update the filter state accordingly before returning the filtered output. Optionally, they all take a second parameter (`float dt`) to manually set the time difference since the last update. This way, the filter works more accurately if the timestep is known or shared between all calculations in a loop.
 
 
 ## Example
