@@ -8,9 +8,9 @@ The PCNT peripheral can count at several MHz and should not be a limiting factor
 You can use encoders with cpr of up to 31 bits. (At this resolution, you would get about 100 counts per second if you mounted such a sensor on the earths rotational axis. Thats plenty ;-) ) 
 
 
-## Warning
+## Status
 
-Currently very much untested!
+Not thoroughly tested, but seems to work fine!
 
 ## Hardware Setup
 
