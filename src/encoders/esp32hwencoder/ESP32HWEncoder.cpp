@@ -28,37 +28,45 @@ ESP32HWEncoder::ESP32HWEncoder(int pinA, int pinB, int32_t ppr, int pinI)
 // Interrupt handler for overflowing the pulsecounter count
 void IRAM_ATTR overflowCounter(void* arg)
 {
-    int32_t* count = (*(overflowISR_args_t*) arg).angleoverflow_val;
-    pcnt_unit_t unit = (*(overflowISR_args_t*) arg).unit;
-
-    // Add or subtract depending on the direction of the overflow
-    switch (PCNT.status_unit[unit].val)
+    uint8_t interruptStatus = PCNT.int_st.val;
+    for (uint32_t i = 0; i < 8; i++)
     {
-    case PCNT_EVT_L_LIM:
-        *count += INT16_MIN/2; // This _should_ be just INT16_MIN, but it has to be halved for some reason
-        break;
-    case PCNT_EVT_H_LIM:
-        *count += INT16_MAX/2;
-        break;
-    default:
-        break;
+        if (interruptStatus & BIT(i))
+        {
+            int32_t set = ((overflowISR_args_t*) arg)[i].set;
+            if(set != 1){ continue;}
+            int32_t* count = ((overflowISR_args_t*) arg)[i].angleoverflow_val;
+            
+            // Add or subtract depending on the direction of the overflow
+            switch (PCNT.status_unit[i].val)
+            {
+            case PCNT_EVT_L_LIM:
+                *count += INT16_MIN;
+                break;
+            case PCNT_EVT_H_LIM:
+                *count += INT16_MAX;
+                break;
+            default:
+                break;
+            }
+            
+            // Clear the interrupt
+            PCNT.int_clr.val = BIT(i);
+        }
     }
-
-    // Clear the interrupt
-    PCNT.int_clr.val = BIT(unit);
 }
 
 // Interrupt handler for zeroing the pulsecounter count
 void IRAM_ATTR ESP32HWEncoder::indexHandler()
-{
-    pcnt_counter_clear(pcnt_config.unit);
-    angleOverflow = 0;
-    indexFound = true;
-}
+    {
+        pcnt_counter_clear(pcnt_config.unit);
+        angleOverflow = 0;
+        indexFound = true;
+    }
 
 void ESP32HWEncoder::init()
 {
-
+    
     // Statically allocate and initialize the spinlock
     spinlock = portMUX_INITIALIZER_UNLOCKED;
 
@@ -68,11 +76,14 @@ void ESP32HWEncoder::init()
         if(cpr > 0){
             inv_cpr = 1.0f/cpr;
         }
-
-        pcnt_config.unit = (pcnt_unit_t) i;
-        if(pcnt_unit_config(&pcnt_config) == ESP_OK){
-            initialized = true;
-            break;
+        if(used_units[i] == 0){
+            pcnt_config.unit = (pcnt_unit_t) i;
+            if(pcnt_unit_config(&pcnt_config) == ESP_OK){
+                initialized = true;
+                // Serial.printf("Configured PCNT unit %d\n", i);
+                used_units[i] = 1;
+                break;
+            }
         }
 
     }
@@ -92,8 +103,9 @@ void ESP32HWEncoder::init()
         pcnt_event_enable(pcnt_config.unit, PCNT_EVT_H_LIM);
 
         // Pass pointer to the angle accumulator and the current PCNT unit to the ISR
-        overflowISR_args.angleoverflow_val = &angleOverflow;
-        overflowISR_args.unit = pcnt_config.unit;
+        overflowISR_args[pcnt_config.unit].angleoverflow_val = &angleOverflow;
+        overflowISR_args[pcnt_config.unit].unit = pcnt_config.unit;
+        overflowISR_args[pcnt_config.unit].set = 1;
 
         // Register and enable the interrupt
         pcnt_isr_register(overflowCounter, (void*)&overflowISR_args, 0, (pcnt_isr_handle_t*) NULL);
