@@ -56,8 +56,8 @@ class ESP32HWEncoder : public Sensor{
         pcnt_config_t pcnt_config;
 
         int16_t angleCounter; // Stores the PCNT value
-        int32_t angleOverflow; // In case the PCNT peripheral overflows, this receives the max count to keep track of large counts/angles. On index, this gets reset.
-        int32_t angleSum; // sum of angle 
+        int32_t angleOverflow; // In case the PCNT peripheral overflows, this accumulates the max count to keep track of large counts/angles (>= 16 Bit). On index, this gets reset.
+        int32_t angleSum; // Sum of Counter and Overflow in range [0,cpr]
 
         int32_t cpr; // Counts per rotation = 4 * ppr for quadrature encoders
         float inv_cpr;

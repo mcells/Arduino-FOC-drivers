@@ -25,7 +25,7 @@ ESP32HWEncoder::ESP32HWEncoder(int pinA, int pinB, int32_t ppr, int pinI)
     pcnt_config.counter_h_lim = INT16_MAX;
 } 
 
-// Interrupt handler for overflowing the pulsecounter count
+// Interrupt handler for accumulating the pulsecounter count
 void IRAM_ATTR overflowCounter(void* arg)
 {
     uint8_t interruptStatus = PCNT.int_st.val;
@@ -116,7 +116,7 @@ void ESP32HWEncoder::init()
             initialized = false;
         }
         
-        // If an index Pin is defined, create a ISR to zero the angle when the index fires
+        // If an index Pin is defined, create an ISR to zero the angle when the index fires
         if (hasIndex())
         {
             attachInterrupt(static_cast<u_int8_t>(_pinI), std::bind(&ESP32HWEncoder::indexHandler,this), RISING);
@@ -147,7 +147,7 @@ int ESP32HWEncoder::hasIndex()
 void ESP32HWEncoder::setCpr(int32_t ppr){
     cpr = 4*ppr;
     if(cpr > 0){
-        inv_cpr = 1.0f/cpr; // Precalculate the inverse of the angle to avoid slow float divisions
+        inv_cpr = 1.0f/cpr; // Precalculate the inverse of cpr to avoid "slow" float divisions
     }
 }
 
@@ -165,7 +165,7 @@ float IRAM_ATTR ESP32HWEncoder::getSensorAngle()
     // Retrieve the count register into a variable
     pcnt_get_counter_value(pcnt_config.unit, &angleCounter);
 
-    // Trim the overflow variable to prevent issues with it overflowing
+    // Trim the accumulator variable to prevent issues with it overflowing
     // Make the % operand behave mathematically correct (-5 modulo 4 == 3; -5 % 4 == -1)
     angleOverflow %= cpr;
     if (angleOverflow < 0){
