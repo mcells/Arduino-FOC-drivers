@@ -36,9 +36,9 @@ class ESP32HWEncoder : public Sensor{
         float getSensorAngle() override;
         void setCpr(int32_t ppr);
         int32_t getCpr();
+        void setStepDirMode();
+        void setQuadratureMode();
         bool initialized = false;
-
-        
 
         Pullup pullup; //!< Configuration parameter internal or external pullups
         

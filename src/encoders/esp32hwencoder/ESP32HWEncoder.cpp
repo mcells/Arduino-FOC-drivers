@@ -155,6 +155,18 @@ int32_t ESP32HWEncoder::getCpr(){
     return cpr;
 }
 
+// Change to Step/Dir counting mode. A->Step, B->Dir
+void ESP32HWEncoder::setStepDirMode(){
+    pcnt_set_mode(pcnt_config.unit, PCNT_CHANNEL_0, PCNT_COUNT_INC, PCNT_COUNT_DIS, PCNT_MODE_KEEP, PCNT_MODE_KEEP);
+    pcnt_set_mode(pcnt_config.unit, PCNT_CHANNEL_1, PCNT_COUNT_DIS, PCNT_COUNT_DIS, PCNT_MODE_KEEP, PCNT_MODE_REVERSE);
+}
+
+// Change to default AB (quadrature) mode
+void ESP32HWEncoder::setQuadratureMode(){
+    pcnt_set_mode(pcnt_config.unit, PCNT_CHANNEL_0, PCNT_COUNT_INC, PCNT_COUNT_DEC, PCNT_MODE_REVERSE, PCNT_MODE_KEEP);
+    pcnt_set_mode(pcnt_config.unit, PCNT_CHANNEL_1, PCNT_COUNT_DEC, PCNT_COUNT_INC, PCNT_MODE_REVERSE, PCNT_MODE_KEEP);
+}
+
 float IRAM_ATTR ESP32HWEncoder::getSensorAngle()
 {
     if(!initialized){return -1.0f;}

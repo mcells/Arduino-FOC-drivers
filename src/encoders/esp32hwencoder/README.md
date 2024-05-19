@@ -1,6 +1,6 @@
 # SimpleFOC Driver for ESP32 hardware encoder
 
-This encoder driver uses the ESP32´s dedicated pulse counter hardware to efficiently count the AB(I) signals of an encoder. 
+This encoder driver uses the ESP32´s dedicated pulse counter hardware to efficiently count the AB(I) signals of an encoder. It also supports a Step/Dir-type mode.
 
 Because most of the counting is done by the peripheral, it should support much higher speeds in comparison to the generic interrupt-based encoder implementation provided in the main library. 
 The PCNT peripheral can count at several MHz and should not be a limiting factor here.
@@ -10,7 +10,7 @@ You can use encoders with cpr of up to 31 bits. (At this resolution, you would g
 
 ## Status
 
-Not thoroughly tested, but seems to work fine!
+Seems to work fine! Step/Dir mode is untested.
 
 ## Hardware Setup
 
@@ -36,6 +36,14 @@ ESP32HWEncoder encoder = ESP32HWEncoder(ENCODER_PIN_A, ENCODER_PIN_B, ENCODER_PP
 void setup() {
     encoder.pullup = Pullup::USE_INTERN; // optional: pullups
 
+    encoder.setStepDirMode(); // optional: set Stepper type step/dir mode
+
     encoder.init();
+}
+
+void loop() {
+    encoder.update(); // optional: Update manually if not using loopfoc()
+
+    encoder.getAngle() // Access the sensor value
 }
 ```
